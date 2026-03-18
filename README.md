@@ -1,4 +1,5 @@
 # 🏗️ FEM Soletta - Analisi Piastre in Calcestruzzo con OpenSeesPy e Streamlit
+<img width="2912" height="1440" alt="Gemini_Generated_Image_gt9bfngt9bfngt9b" src="https://github.com/user-attachments/assets/301f39e2-4774-41c4-ad87-9f1ea8d34898" />
 
 Un'applicazione web interattiva sviluppata in Python per la modellazione e l'analisi agli Elementi Finiti (FEM) di solette in calcestruzzo. L'applicativo unisce la potenza del solutore strutturale **OpenSeesPy** con la flessibilità dell'interfaccia utente **Streamlit**, offrendo visualizzazioni 2D e 3D avanzate grazie a **Plotly** e **Matplotlib**.
 
