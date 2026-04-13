@@ -1,10 +1,21 @@
 import streamlit as st
 import openseespy.opensees as ops
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import plotly.graph_objects as go
 import pandas as pd
+import io
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
+from reportlab.lib.colors import HexColor, white, black
+from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Table,
+                                 TableStyle, Image, PageBreak)
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from datetime import datetime
 
 # ==========================================
 # 1. FUNZIONI GEOMETRICHE
@@ -155,6 +166,165 @@ def esegui_analisi_fem(x_coords, y_coords, nodi_bloccati, carichi_conc_df, caric
 
     return U_z, sforzi, ok
 
+
+# ==========================================
+# FUNZIONE GENERAZIONE PDF - PIASTRA
+# ==========================================
+
+def _draw_contour_matplotlib(x_coords, y_coords, Z, title, cmap='Turbo', unit='mm'):
+    """Disegna una mappa di sollecitazione con matplotlib e ritorna BytesIO."""
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+    X, Y = np.meshgrid(x_coords, y_coords)
+    v_min = np.min(Z)
+    v_max = np.max(Z)
+    if abs(v_max - v_min) < 1e-12:
+        v_max = v_min + 1
+    cs = ax.contourf(X, Y, Z, levels=20, cmap=cmap)
+    fig.colorbar(cs, ax=ax, label=f"{title} ({unit})")
+    ax.set_xlabel("X (m)")
+    ax.set_ylabel("Y (m)")
+    ax.set_title(f"{title} ({unit})", fontsize=11, fontweight='bold')
+    ax.set_aspect('equal')
+    plt.tight_layout()
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=150, bbox_inches='tight')
+    plt.close(fig)
+    buf.seek(0)
+    return buf
+
+
+def _header_footer_piastra(canvas, doc):
+    canvas.saveState()
+    pagina = doc.page
+    larghezza, altezza = A4
+    canvas.setStrokeColor(HexColor("#2C3E50"))
+    canvas.setLineWidth(0.8)
+    canvas.line(15*mm, altezza - 12*mm, larghezza - 15*mm, altezza - 12*mm)
+    canvas.setFont("Helvetica-Bold", 9)
+    canvas.setFillColor(HexColor("#2C3E50"))
+    canvas.drawString(15*mm, altezza - 10*mm, "Analisi FEM Soletta")
+    canvas.setFont("Helvetica", 8)
+    canvas.drawRightString(larghezza - 15*mm, altezza - 10*mm, "Relazione di Calcolo")
+    canvas.line(15*mm, 10*mm, larghezza - 15*mm, 10*mm)
+    canvas.setFont("Helvetica", 7)
+    canvas.drawString(15*mm, 6*mm, f"Generato il {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+    canvas.drawRightString(larghezza - 15*mm, 6*mm, f"Pagina {pagina}")
+    canvas.restoreState()
+
+
+def genera_pdf_piastra(int_x_str, int_y_str, dim_mesh, spessore, E_cls, nu_cls,
+                       x_coords, y_coords, nodi_bloccati,
+                       carichi_uni_df, carichi_conc_df,
+                       U_z, sforzi, ok_status):
+    """Genera la relazione PDF per l'analisi FEM della piastra."""
+    buf_pdf = io.BytesIO()
+    doc = SimpleDocTemplate(buf_pdf, pagesize=A4,
+                            leftMargin=15*mm, rightMargin=15*mm,
+                            topMargin=18*mm, bottomMargin=18*mm)
+
+    styles = getSampleStyleSheet()
+    style_title = ParagraphStyle('SezTitle', parent=styles['Heading2'],
+                                  backColor=HexColor("#2C3E50"), textColor=white,
+                                  fontName='Helvetica-Bold', fontSize=12,
+                                  spaceAfter=2*mm, spaceBefore=6*mm,
+                                  leftIndent=2*mm, borderPadding=(2*mm, 2*mm, 2*mm, 2*mm))
+    style_normal = styles['Normal']
+
+    story = []
+
+    # Frontespizio
+    story.append(Spacer(1, 25*mm))
+    story.append(Paragraph("Analisi FEM Soletta in Calcestruzzo", ParagraphStyle('BigTitle', parent=styles['Title'], fontSize=22, fontName='Helvetica-Bold', textColor=HexColor("#2C3E50"))))
+    story.append(Spacer(1, 3*mm))
+    story.append(Paragraph("Relazione di Calcolo – Piastra sottile su appoggi", ParagraphStyle('Sub', parent=styles['Normal'], fontSize=14, textColor=HexColor("#555555"))))
+    story.append(Spacer(1, 5*mm))
+    story.append(Paragraph(f"Data: {datetime.now().strftime('%d/%m/%Y %H:%M')}", style_normal))
+    story.append(PageBreak())
+
+    # Sezione 1: Parametri
+    story.append(Paragraph("1. Dati di Input", style_title))
+    data_rows = [
+        [Paragraph("<b>Parametro</b>", style_normal), Paragraph("<b>Valore</b>", style_normal), Paragraph("<b>Unità</b>", style_normal)],
+        ["Interasse X", str(int_x_str), "m"],
+        ["Interasse Y", str(int_y_str), "m"],
+        ["Dimensione mesh", f"{dim_mesh:.2f}", "m"],
+        ["Spessore", f"{spessore:.3f}", "m"],
+        ["Modulo E", f"{E_cls:.3e}", "N/m²"],
+        ["Coefficiente Poisson", f"{nu_cls:.3f}", "—"],
+        ["Nodi vincolati", str(len(nodi_bloccati)), "—"],
+        ["Nodi totali", str(len(x_coords) * len(y_coords)), "—"],
+    ]
+    tab_style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), HexColor("#2C3E50")),
+        ('TEXTCOLOR', (0, 0), (-1, 0), white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
+        ('GRID', (0, 0), (-1, -1), 0.4, HexColor("#CCCCCC")),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [white, HexColor("#F2F2F2")]),
+    ])
+    story.append(Table(data_rows, colWidths=[60*mm, 55*mm, 30*mm], style=tab_style))
+    story.append(Spacer(1, 3*mm))
+
+    # Carichi
+    story.append(Paragraph("2. Carichi Applicati", style_title))
+    carichi_rows = [[Paragraph("<b>Tipo</b>", style_normal), Paragraph("<b>Dettagli</b>", style_normal)]]
+    if not carichi_uni_df.empty:
+        for _, row in carichi_uni_df.iterrows():
+            carichi_rows.append(["Distribuito", f"q={row.get('q_kN_m2',0):.2f} kN/m², area [{row.get('X_min',0):.1f}, {row.get('X_max',0):.1f}] x [{row.get('Y_min',0):.1f}, {row.get('Y_max',0):.1f}]"])
+    if not carichi_conc_df.empty:
+        for _, row in carichi_conc_df.iterrows():
+            carichi_rows.append(["Concentrato", f"F={row.get('Carico_Totale_kN',0):.1f} kN in ({row.get('X',0):.2f}, {row.get('Y',0):.2f}), impronta {row.get('L',0):.2f}x{row.get('B',0):.2f}"])
+    if len(carichi_rows) > 1:
+        story.append(Table(carichi_rows, colWidths=[30*mm, 130*mm], style=tab_style))
+    story.append(Spacer(1, 3*mm))
+
+    # Risultati FEM
+    if ok_status == 0 and U_z is not None:
+        story.append(Paragraph("3. Risultati FEM", style_title))
+        w_max = float(np.max(np.abs(U_z))) * 1000
+        res_data = [
+            [Paragraph("<b>Grandezza</b>", style_normal), Paragraph("<b>Valore</b>", style_normal)],
+            ["Spostamento max |Uz|", f"{w_max:.4f} mm"],
+        ]
+        for key, unit_m in [('Mxx', 'kNm/m'), ('Myy', 'kNm/m'), ('Mxy', 'kNm/m'),
+                             ('Vxz', 'kN/m'), ('Vyz', 'kN/m'),
+                             ('Nxx', 'kN/m'), ('Nyy', 'kN/m'), ('Nxy', 'kN/m')]:
+            if key in sforzi:
+                val = float(np.max(np.abs(sforzi[key])))
+                res_data.append([f"Sforzo max |{key}|", f"{val:.4f} {unit_m}"])
+        story.append(Table(res_data, colWidths=[80*mm, 65*mm], style=tab_style))
+        story.append(Spacer(1, 4*mm))
+
+        # Mappa deformata
+        story.append(Paragraph("4. Mappa Deformata Uz", style_title))
+        buf_uz = _draw_contour_matplotlib(x_coords, y_coords, U_z * 1000, "Deformata Uz", cmap='Turbo', unit='mm')
+        story.append(Image(buf_uz, width=160*mm, height=90*mm))
+
+        # Mappe sollecitazioni (2 per pagina)
+        story.append(PageBreak())
+        story.append(Paragraph("5. Mappe Sollecitazioni", style_title))
+        sforzi_key = ['Mxx', 'Myy', 'Vxz', 'Vyz']
+        sforzi_unit = ['kNm/m', 'kNm/m', 'kN/m', 'kN/m']
+        sforzi_cmap = ['RdBu_r', 'RdBu_r', 'PiYG', 'PiYG']
+        i = 0
+        for key, unit_m, cmap in zip(sforzi_key, sforzi_unit, sforzi_cmap):
+            if key in sforzi and i < 4:
+                buf_sf = _draw_contour_matplotlib(x_coords, y_coords, sforzi[key], key, cmap=cmap, unit=unit_m)
+                story.append(Image(buf_sf, width=160*mm, height=80*mm))
+                story.append(Spacer(1, 3*mm))
+                i += 1
+                if i == 2:
+                    story.append(Spacer(1, 3*mm))
+
+    else:
+        story.append(Paragraph("3. Errore FEM", style_title))
+        story.append(Paragraph("<b>L'analisi FEM non è andata a buon fine. Controllare i vincoli.</b>", style_normal))
+
+    doc.build(story, onFirstPage=_header_footer_piastra, onLaterPages=_header_footer_piastra)
+    buf_pdf.seek(0)
+    return buf_pdf
+
 # ==========================================
 # 3. INTERFACCIA STREAMLIT E PLOT
 # ==========================================
@@ -300,3 +470,21 @@ if int_x and int_y:
                             
                 else:
                     st.error("Errore FEM. Controlla la labilità del modello.")
+
+        # --- DOWNLOAD PDF ---
+        if 'U_z' in dir() and U_z is not None and ok == 0:
+            try:
+                pdf_bytes = genera_pdf_piastra(
+                    int_x_str, int_y_str, dim_mesh, spessore, E_cls, nu_cls,
+                    x_coords, y_coords, nodi_bloccati,
+                    carichi_uni_df, carichi_conc_df,
+                    U_z, sforzi, ok
+                )
+                st.download_button(
+                    label="📄 Scarica Relazione PDF",
+                    data=pdf_bytes,
+                    file_name="relazione_piastra_fem.pdf",
+                    mime="application/pdf"
+                )
+            except Exception as e_pdf:
+                st.warning(f"Generazione PDF non disponibile: {e_pdf}")

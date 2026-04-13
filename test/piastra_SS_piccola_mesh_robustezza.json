@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "verifica": "Piastra SS piccola - robustezza mesh",
+    "norma": "Test di stabilita numerica",
+    "fonte": "N/A",
+    "url_fonte": "N/A",
+    "data_generazione": "2026-04-13",
+    "autore": "CivilBox Test Builder Agent"
+  },
+  "input": {
+    "interassi_x": "1.0, 1.0",
+    "interassi_y": "1.0, 1.0",
+    "dim_mesh": 0.5,
+    "spessore": 0.2,
+    "E": 30000000000.0,
+    "nu": 0.2,
+    "vincoli_tutti_4_lati": true,
+    "q_kN_m2": 5.0
+  },
+  "risultati_attesi": {
+    "analisi_completata": {
+      "valore": 0,
+      "unita": "flag",
+      "tolleranza_percentuale": 0.0,
+      "nota": "L'analisi FEM deve completare senza errori (ok = 0 nel codice)"
+    }
+  },
+  "esito_atteso": "VERIFICATO",
+  "note_test": "Caso edge: piastra 3x3m con mesh grossolana. Verifica che l'app non crashi."
+}

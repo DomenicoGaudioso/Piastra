@@ -1,0 +1,32 @@
+{
+  "meta": {
+    "verifica": "Piastra SS con carico concentrato centrale",
+    "norma": "Teoria delle Piastre Inflesse",
+    "fonte": "Timoshenko & Woinowsky-Krieger 5.4",
+    "url_fonte": "N/A",
+    "data_generazione": "2026-04-13",
+    "autore": "CivilBox Test Builder Agent"
+  },
+  "input": {
+    "interassi_x": "1.0, 1.0, 1.0, 1.0",
+    "interassi_y": "1.0, 1.0, 1.0, 1.0",
+    "dim_mesh": 0.5,
+    "spessore": 0.3,
+    "E": 30000000000.0,
+    "nu": 0.2,
+    "vincoli_tutti_4_lati": true,
+    "carichi_concentrati": [
+      {"X": 2.0, "Y": 2.0, "L": 0.5, "B": 0.5, "Carico_Totale_kN": 100.0}
+    ]
+  },
+  "risultati_attesi": {
+    "w_max_ordine": {
+      "valore": 1.0,
+      "unita": "mm",
+      "tolleranza_percentuale": 50.0,
+      "nota": "Verifica ordine di grandezza. Per piastra SS 4x4m, P=100 kN centrale, h=0.3m. Freccia in ordine di 1 mm. Valore esatto dipende dalla mesh."
+    }
+  },
+  "esito_atteso": "VERIFICATO",
+  "note_test": "Piastra SS con carico concentrato. Tolleranza ampia - verifica che l'app non crashi e produca risultati dell'ordine di grandezza corretto."
+}

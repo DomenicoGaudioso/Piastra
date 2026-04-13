@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "verifica": "Piastra SS quadrata sotto carico uniforme (Navier)",
+    "norma": "Teoria delle Piastre Inflesse - Soluzione di Navier",
+    "fonte": "Timoshenko & Woinowsky-Krieger, Theory of Plates and Shells 5.3",
+    "url_fonte": "N/A",
+    "data_generazione": "2026-04-13",
+    "autore": "CivilBox Test Builder Agent"
+  },
+  "input": {
+    "interassi_x": "1.0, 1.0, 1.0, 1.0",
+    "interassi_y": "1.0, 1.0, 1.0, 1.0",
+    "dim_mesh": 0.25,
+    "spessore": 0.25,
+    "E": 30000000000.0,
+    "nu": 0.2,
+    "vincoli_tutti_4_lati": true,
+    "q_kN_m2": 10.0
+  },
+  "risultati_attesi": {
+    "w_max_ordine": {
+      "valore": 2.55e-3,
+      "unita": "m",
+      "tolleranza_percentuale": 20.0,
+      "nota": "Freccia massima piastra SS quadrata 4x4m, h=0.25m, q=10 kN/m2. D=Eh^3/(12(1-nu^2)). Soluzione Navier: w_max ≈ 2.5 mm. Tolleranza ampia per differenze mesh FEM."
+    }
+  },
+  "esito_atteso": "VERIFICATO",
+  "note_test": "Piastra quadrata 4x4m, spessore 0.25m, SS, carico uniforme q=10 kN/m2. Soluzione Navier per confronto FEM."
+}
