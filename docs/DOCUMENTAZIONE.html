@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Piastra — Documentazione Tecnica FEM</title>
+<style>
+:root {
+  --primary: #1a3a5c;
+  --accent: #2980b9;
+  --accent2: #27ae60;
+  --danger: #e74c3c;
+  --warn: #f39c12;
+  --bg: #f8f9fa;
+  --card-bg: #ffffff;
+  --border: #dee2e6;
+  --text: #212529;
+  --text-light: #6c757d;
+}
+html {scroll-behavior: smooth}
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: var(--text);
+  line-height: 1.6;
+  background: var(--bg);
+  margin: 0;
+  padding: 0;
+}
+a {text-decoration: none; color: var(--accent)}
+ul, ol {margin: 0.5rem 0; padding-left: 1.5rem}
+
+/* Navigation */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 0.8rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.navbar .brand {font-size: 1.1rem; font-weight: 700; color: var(--primary)}
+.navbar .brand span {color: var(--accent)}
+.nav-links {display: flex; gap: 1.2rem; font-size: 0.9rem}
+.nav-links a {color: var(--text-light); transition: color 0.2s}
+.nav-links a:hover {color: var(--primary)}
+
+/* Hero */
+.hero {
+  background: linear-gradient(135deg, var(--primary) 0%, #2c5f8a 100%);
+  color: #fff;
+  text-align: center;
+  padding: 4rem 2rem 5rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: var(--bg);
+  clip-path: ellipse(60% 100% at 50% 100%);
+}
+.hero h1 {font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem}
+.hero .subtitle {font-size: 1.1rem; opacity: 0.9; margin-bottom: 1.5rem}
+.badges {display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1.5rem}
+.badge {
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.badge-blue {background: #1565C0}
+.badge-green {background: var(--accent2)}
+.badge-orange {background: var(--warn)}
+.badge-gray {background: #616161}
+
+/* Sections */
+.section {padding: 3rem 2rem; max-width: 1100px; margin: 0 auto}
+.section h2 {
+  font-size: 1.6rem;
+  color: var(--primary);
+  margin-bottom: 1.2rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 3px solid var(--accent);
+  display: inline-block;
+}
+.section h3 {
+  font-size: 1.15rem;
+  color: var(--primary);
+  margin: 1.5rem 0 0.8rem;
+}
+
+/* Cards */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.2rem;
+  margin-top: 1.2rem;
+}
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.card h4 {
+  color: var(--primary);
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.card p {font-size: 0.9rem; color: var(--text-light)}
+
+/* Tables */
+table {width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85rem}
+thead {background: var(--primary); color: #fff}
+th, td {padding: 0.6rem 0.8rem; text-align: left; border: 1px solid var(--border)}
+th {font-weight: 600}
+tbody tr:nth-child(even) {background: #f8fafc}
+tbody tr:hover {background: #eef4fa}
+
+/* Tables - Specific Style */
+.table-responsive {overflow-x: auto}
+.table-header-dark thead {background: var(--primary) !important; color: #fff !important}
+
+/* Formula Box */
+.formula-box {
+  background: #f4f6f9;
+  border-left: 4px solid var(--accent);
+  padding: 1rem 1.5rem;
+  margin: 1rem 0;
+  border-radius: 0 8px 8px 0;
+  font-family: 'Courier New', monospace;
+  font-size: 0.95rem;
+  overflow-x: auto;
+}
+.formula-box .label {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 0.4rem;
+  display: block;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Info Cards */
+.info-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  padding: 1.2rem 1.5rem;
+  margin: 1rem 0;
+}
+.info-card.success {border-left-color: var(--accent2)}
+.info-card.warning {border-left-color: var(--warn)}
+.info-card.danger {border-left-color: var(--danger)}
+.info-card h4 {margin-bottom: 0.5rem; color: var(--primary)}
+.info-card p {font-size: 0.9rem; color: var(--text-light)}
+
+/* ToC */
+.toc {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.toc h3 {margin-top: 0; margin-bottom: 1rem}
+.toc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.5rem;
+}
+.toc a {
+  display: block;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  color: var(--text);
+  transition: all 0.2s;
+}
+.toc a:hover {background: var(--bg); color: var(--accent)}
+
+/* Footer */
+.footer {
+  background: var(--primary);
+  color: rgba(255,255,255,0.8);
+  text-align: center;
+  padding: 2rem 2rem 1.5rem;
+  margin-top: 2rem;
+}
+.footer p {margin: 0.3rem 0; font-size: 0.9rem}
+.footer .disclaimer {
+  border-top: 1px solid rgba(255,255,255,0.15);
+  margin-top: 1rem;
+  padding-top: 1rem;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+.footer strong {color: #fff}
+
+/* SVG Styles */
+.svg-diagram {background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .navbar {flex-direction: column; gap: 0.5rem}
+  .nav-links {flex-wrap: wrap; justify-content: center}
+  .hero h1 {font-size: 1.8rem}
+  .section {padding: 2rem 1rem}
+}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="navbar">
+  <a href="#hero" class="brand">🏗️ Piastra <span>FEM</span></a>
+  <div class="nav-links">
+    <a href="#panoramica">Panoramica</a>
+    <a href="#funzionalita">Funzionalità</a>
+    <a href="#input">Input</a>
+    <a href="#output">Output</a>
+    <a href="#normativa">Normativa</a>
+    <a href="#test">Test</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero" id="hero">
+  <h1>🏗️ FEM Soletta</h1>
+  <p class="subtitle">Analisi agli Elementi Finiti di solette in calcestruzzo — Modellazione, calcolo e post-processing interattivo</p>
+  <div class="badges">
+    <span class="badge badge-blue">ShellMITC4</span>
+    <span class="badge badge-green">OpenSeesPy</span>
+    <span class="badge badge-orange">8 Componenti</span>
+    <span class="badge badge-gray">Plotly 3D</span>
+  </div>
+</section>
+
+<!-- ToC -->
+<div class="section">
+  <div class="toc">
+    <h3>Indice dei Contenuti</h3>
+    <div class="toc-grid">
+      <a href="#panoramica">01 Panoramica Generale</a>
+      <a href="#funzionalita">02 Funzionalità Principali</a>
+      <a href="#input">03 Input e Parametri</a>
+      <a href="#output">04 Output Prodotti</a>
+      <a href="#normativa">05 Normativa e Riferimenti</a>
+      <a href="#formule">06 Formule di Calcolo</a>
+      <a href="#diagramma">07 Diagramma Geometria</a>
+      <a href="#test">08 Suite Test</a>
+      <a href="#limitazioni">09 Limitazioni</a>
+    </div>
+  </div>
+</div>
+
+<!-- Section 1: Panoramica -->
+<section class="section" id="panoramica">
+  <h2>01 Panoramica Generale</h2>
+  <p>Applicazione web interattiva per la modellazione e l'analisi agli Elementi Finiti (FEM) di solette in calcestruzzo. Utilizza il solutore strutturale OpenSeesPy con elementi ShellMITC4 per il calcolo di spostamenti e sollecitazioni in piastre sottili.</p>
+  
+  <div class="info-card success">
+    <h4>📌 Pubblico Target</h4>
+    <p>Ingegneri strutturali, progettisti di edifici civili, studenti di ingegneria civile per analisi preliminari di solette in calcestruzzo armato.</p>
+  </div>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Caratteristica</th>
+        <th>Valore</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Nome applicazione</td><td>Piastra (FEM Soletta)</td></tr>
+      <tr><td>versione</td><td>1.0</td></tr>
+      <tr><td>linguaggio</td><td>Python</td></tr>
+      <tr><td>interfaccia</td><td>Streamlit</td></tr>
+      <tr><td>solutore FEM</td><td>OpenSeesPy</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- Section 2: Funzionalità -->
+<section class="section" id="funzionalita">
+  <h2>02 Funzionalità Principali</h2>
+  <div class="cards">
+    <div class="card">
+      <h4>📐 Geometria Parametrica</h4>
+      <p>Definizione rapida della griglia strutturale inserendo gli interassi longitudinali e trasversali separati da virgola.</p>
+    </div>
+    <div class="card">
+      <h4>🔲 Mesh Automatica</h4>
+      <p>Discretizzazione automatica della piastra in base alla dimensione massima desiderata per l'elemento finito.</p>
+    </div>
+    <div class="card">
+      <h4>🔒 Vincoli Dinamici</h4>
+      <p>Appoggi continui su linee (setti, travi rigide) o appoggi puntuali (pilastri). Singoli nodi bloccati.</p>
+    </div>
+    <div class="card">
+      <h4>⚖️ Carichi Multipli</h4>
+      <p>Carichi uniformemente distribuiti q (kN/m²) e carichi concentrati F (kN) su area L×B con ripartizione automatica.</p>
+    </div>
+    <div class="card">
+      <h4>🔬 Post-Processing Avanzato</h4>
+      <p>Contour plot 2D e superficie 3D interattive per tutte le 8 componenti di sforzo: Nxx, Nyy, Nxy, Mxx, Myy, Mxy, Vxz, Vyz.</p>
+    </div>
+    <div class="card">
+      <h4>📄 Report PDF</h4>
+      <p>Generazione automatica di relazione di calcolo in formato PDF con parametri, risultati e mappe delle sollecitazioni.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Section 3: Input -->
+<section class="section" id="input">
+  <h2>03 Input e Parametri di Calcolo</h2>
+  <div class="table-responsive">
+    <table class="table-header-dark">
+      <thead>
+        <tr>
+          <th>Parametro</th>
+          <th>Tipo</th>
+          <th>Descrizione</th>
+          <th>Unità</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Interassi X</td><td>Stringa</td><td>Interassi longitudinali separati da virgola</td><td>m</td></tr>
+        <tr><td>Interassi Y</td><td>Stringa</td><td>Interassi trasversali separati da virgola</td><td>m</td></tr>
+        <tr><td>Dimensione mesh</td><td>Float</td><td>Dimensione massima elemento finito</td><td>m</td></tr>
+        <tr><td>Spessore</td><td>Float</td><td>Spessore della soletta</td><td>m</td></tr>
+        <tr><td>E (Modulo Young)</td><td>Float</td><td>Modulo di elasticità del calcestruzzo</td><td>N/m²</td></tr>
+        <tr><td>Poisson</td><td>Float</td><td>Coefficiente di Poisson del materiale</td><td>—</td></tr>
+        <tr><td>Assi X continui</td><td>Lista</td><td>Assi X vincolati (appoggi continui)</td><td>m</td></tr>
+        <tr><td>Assi Y continui</td><td>Lista</td><td>Assi Y vincolati (appoggi continui)</td><td>m</td></tr>
+        <tr><td>Puntuali</td><td>Lista</td><td>Punti di appoggio puntuale (X, Y)</td><td>m</td></tr>
+        <tr><td>Carichi uniformi</td><td>DataFrame</td><td>Lista carichi distribuiti (q, area)</td><td>kN/m²</td></tr>
+        <tr><td>Carichi concentrati</td><td>DataFrame</td><td>Lista carichi concentrati (F, centro, area)</td><td>kN</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Section 4: Output -->
+<section class="section" id="output">
+  <h2>04 Output Prodotti</h2>
+  <div class="table-responsive">
+    <table class="table-header-dark">
+      <thead>
+        <tr>
+          <th>Grandezza</th>
+          <th>Descrizione</th>
+          <th>Unità</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>U<sub>z</sub></td><td>Spostamento verticale (freccia)</td><td>m</td></tr>
+        <tr><td>N<sub>xx</sub></td><td>Sforzo membranale in direzione X</td><td>kN/m</td></tr>
+        <tr><td>N<sub>yy</sub></td><td>Sforzo membranale in direzione Y</td><td>kN/m</td></tr>
+        <tr><td>N<sub>xy</sub></td><td>Sforzo membranale tangenziale</td><td>kN/m</td></tr>
+        <tr><td>M<sub>xx</sub></td><td>Momento flettente in direzione X</td><td>kNm/m</td></tr>
+        <tr><td>M<sub>yy</sub></td><td>Momento flettente in direzione Y</td><td>kNm/m</td></tr>
+        <tr><td>M<sub>xy</sub></td><td>Momento torcente</td><td>kNm/m</td></tr>
+        <tr><td>V<sub>xz</sub></td><td>Forza di taglio in piano XZ</td><td>kN/m</td></tr>
+        <tr><td>V<sub>yz</sub></td><td>Forza di taglio in piano YZ</td><td>kN/m</td></tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="info-card">
+    <h4>📊 Visualizzazioni</h4>
+    <p>Modello 3D pre-analisi, deformata U<sub>z</sub> 3D, contour plot 2D/3D, isoline. Download PDF della relazione di calcolo.</p>
+  </div>
+</section>
+
+<!-- Section 5: Normativa -->
+<section class="section" id="normativa">
+  <h2>05 Normativa e Riferimenti</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Riferimento</th>
+        <th>Descrizione</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>NTC 2018</strong></td><td>Norme Tecniche per le Costruzioni - Materiali e criteri di verifica</td></tr>
+      <tr><td><strong>EC2</strong></td><td>Eurocodice 2 - Progettazione delle strutture in calcestruzzo</td></tr>
+      <tr><td><strong>Timoshenko</strong></td><td>Theory of Plates and Shells — Soluzione analitica piastre (Navier)</td></tr>
+    </tbody>
+  </table>
+  
+  <div class="info-card warning">
+    <h4>⚠️ Nota Tecnica</h4>
+    <p>L'analisi è di tipo <strong>elastico lineare</strong>. Il modello non tiene conto di fessurazione, ritiro, viscosità o non-linearità del materiale. I risultati devono essere verificati da un ingegnere abilitato.</p>
+  </div>
+</section>
+
+<!-- Section 6: Formule -->
+<section class="section" id="formule">
+  <h2>06 Formule di Calcolo</h2>
+  
+  <div class="formula-box">
+    <span class="label">Rigidezza flessionale della piastra</span>
+    D = E · h³ / [12 · (1 − ν²)]
+  </div>
+  
+  <div class="formula-box">
+    <span class="label">Momenti flettenti</span>
+    M<sub>xx</sub> = −D · (κ<sub>xx</sub> + ν · κ<sub>yy</sub>)<br>
+    M<sub>yy</sub> = −D · (κ<sub>yy</sub> + ν · κ<sub>xx</sub>)
+  </div>
+  
+  <div class="formula-box">
+    <span class="label">Momento torcente</span>
+    M<sub>xy</sub> = −D · (1 − ν) · κ<sub>xy</sub>
+  </div>
+  
+  <div class="formula-box">
+    <span class="label">Sforzi membranali</span>
+    N<sub>xx</sub> = C · (ε<sub>xx</sub> + ν · ε<sub>yy</sub>)<br>
+    N<sub>yy</sub> = C · (ε<sub>yy</sub> + ν · ε<sub>xx</sub>)<br>
+    N<sub>xy</sub> = C · [(1 − ν) / 2] · ε<sub>xy</sub><br>
+    <em>dove C = E · h / (1 − ν²)</em>
+  </div>
+  
+  <div class="formula-box">
+    <span class="label">Forze di taglio</span>
+    V<sub>xz</sub> = ∂M<sub>xx</sub>/∂x + ∂M<sub>xy</sub>/∂y<br>
+    V<sub>yz</sub> = ∂M<sub>yy</sub>/∂y + ∂M<sub>xy</sub>/∂x
+  </div>
+</section>
+
+<!-- Section 7: Diagramma -->
+<section class="section" id="diagramma">
+  <h2>07 Diagramma della Geometria</h2>
+  <p>Schema rappresentativo della piastra con mesh e vincoli:</p>
+  
+  <div class="svg-diagram">
+    <svg viewBox="0 0 600 400" width="100%" height="auto">
+      <!-- Sfondo griglia -->
+      <defs>
+        <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+          <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#e0e0e0" stroke-width="0.5"/>
+        </pattern>
+      </defs>
+      <rect width="600" height="400" fill="url(#grid)"/>
+      
+      <!-- Piastra -->
+      <rect x="50" y="50" width="500" height="300" fill="#e3f2fd" stroke="#1a3a5c" stroke-width="2"/>
+      
+      <!-- Assi X -->
+      <line x1="50" y1="350" x2="550" y2="350" stroke="#2980b9" stroke-width="3"/>
+      <text x="560" y="355" font-size="14" fill="#2980b9" font-weight="bold">X</text>
+      
+      <!-- Assi Y -->
+      <line x1="50" y1="50" x2="50" y2="350" stroke="#2980b9" stroke-width="3"/>
+      <text x="40" y="40" font-size="14" fill="#2980b9" font-weight="bold">Y</text>
+      
+      <!-- Mesh lines X -->
+      <line x1="150" y1="50" x2="150" y2="350" stroke="#90caf9" stroke-width="1" stroke-dasharray="4,2"/>
+      <line x1="250" y1="50" x2="250" y2="350" stroke="#90caf9" stroke-width="1" stroke-dasharray="4,2"/>
+      <line x1="350" y1="50" x2="350" y2="350" stroke="#90caf9" stroke-width="1" stroke-dasharray="4,2"/>
+      <line x1="450" y1="50" x2="450" y2="350" stroke="#90caf9" stroke-width="1" stroke-dasharray="4,2"/>
+      
+      <!-- Mesh lines Y -->
+      <line x1="50" y1="125" x2="550" y2="125" stroke="#90caf9" stroke-width="1" stroke-dasharray="4,2"/>
+      <line x1="50" y1="200" x2="550" y2="200" stroke="#90caf9" stroke-width="1" stroke-dasharray="4,2"/>
+      <line x1="50" y1="275" x2="550" y2="275" stroke="#90caf9" stroke-width="1" stroke-dasharray="4,2"/>
+      
+      <!-- Vincoli (triangoli) - Lato inferiore -->
+      <polygon points="150,355 140,375 160,375" fill="#e74c3c"/>
+      <polygon points="250,355 240,375 260,375" fill="#e74c3c"/>
+      <polygon points="350,355 340,375 360,375" fill="#e74c3c"/>
+      <polygon points="450,355 440,375 460,375" fill="#e74c3c"/>
+      
+      <!-- Vincoli (triangoli) - Lato superiore -->
+      <polygon points="150,45 140,25 160,25" fill="#e74c3c"/>
+      <polygon points="450,45 440,25 460,25" fill="#e74c3c"/>
+      
+      <!-- Vincoli laterali -->
+      <polygon points="45,125 25,115 25,135" fill="#e74c3c"/>
+      <polygon points="45,275 25,265 25,285" fill="#e74c3c"/>
+      <polygon points="555,125 575,115 575,135" fill="#e74c3c"/>
+      <polygon points="555,275 575,265 575,285" fill="#e74c3c"/>
+      
+      <!-- Carico distribuito -->
+      <rect x="150" y="125" width="300" height="150" fill="#f39c12" opacity="0.4"/>
+      <text x="280" y="200" font-size="12" fill="#f39c12" font-weight="bold">q (kN/m²)</text>
+      
+      <!-- Legenda -->
+      <rect x="50" y="380" width="15" height="15" fill="#e74c3c"/>
+      <text x="70" y="392" font-size="11">Vincoli (appoggi)</text>
+      
+      <rect x="180" y="380" width="15" height="15" fill="#f39c12" opacity="0.4"/>
+      <text x="200" y="392" font-size="11">Carico distribuito</text>
+      
+      <line x1="300" y1="385" x2="315" y2="385" stroke="#90caf9" stroke-width="1" stroke-dasharray="4,2"/>
+      <text x="320" y="392" font-size="11">Mesh elementi</text>
+      
+      <!-- Dimensioni -->
+      <line x1="50" y1="420" x2="550" y2="420" stroke="#212529" stroke-width="1"/>
+      <line x1="50" y1="415" x2="50" y2="425" stroke="#212529" stroke-width="1"/>
+      <line x1="550" y1="415" x2="550" y2="425" stroke="#212529" stroke-width="1"/>
+      <text x="280" y="445" font-size="12" fill="#212529">Lunghezza X (m)</text>
+      
+      <line x1="620" y1="50" x2="620" y2="350" stroke="#212529" stroke-width="1"/>
+      <line x1="615" y1="50" x2="625" y2="50" stroke="#212529" stroke-width="1"/>
+      <line x1="615" y1="350" x2="625" y2="350" stroke="#212529" stroke-width="1"/>
+      <text x="580" y="200" font-size="12" fill="#212529" transform="rotate(-90, 580, 200)">Larghezza Y (m)</text>
+    </svg>
+  </div>
+</section>
+
+<!-- Section 8: Test -->
+<section class="section" id="test">
+  <h2>08 Suite di Test e Validazione</h2>
+  <p>L'applicazione è validata confrontando i risultati FEM con soluzioni analitiche note:</p>
+  
+  <div class="table-responsive">
+    <table class="table-header-dark">
+      <thead>
+        <tr>
+          <th>Test Case</th>
+          <th>Normativa / Fonte</th>
+          <th>Parametri</th>
+          <th>Esito</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Piastra SS quadrata</strong></td>
+          <td>Teoria piastre inflesse — Soluzione Navier (Timoshenko)</td>
+          <td>4×4m, h=0.25m, q=10 kN/m²</td>
+          <td><span class="badge badge-green">VERIFICATO</span></td>
+        </tr>
+        <tr>
+          <td><strong>Carico concentrato</strong></td>
+          <td>Singolarità di carico — Principio di Saint-Venant</td>
+          <td>F=50kN su area 0.5×0.5m</td>
+          <td><span class="badge badge-green">VERIFICATO</span></td>
+        </tr>
+        <tr>
+          <td><strong>Mesh ridotta</strong></td>
+          <td>Convergenza mesh</td>
+          <td>dim_mesh=0.25m → 0.5m</td>
+          <td><span class="badge badge-green">ROBUSTO</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="info-card">
+    <h4>📂 File di Test</h4>
+    <p>I test case sono salvati in formato JSON nella cartella <code>test/</code> della repository. Ogni file contiene: metadati, parametri di input, risultati attesi e percentuale di tolleranza.</p>
+  </div>
+</section>
+
+<!-- Section 9: Limitazioni -->
+<section class="section" id="limitazioni">
+  <h2>09 Limitazioni e Bug Noti</h2>
+  
+  <div class="info-card danger">
+    <h4>⚠️ Limitazioni note</h4>
+    <ul>
+      <li>Analisi <strong>elastica lineare</strong> — nessuna fessurazione, ritiro o creeping</li>
+      <li>Materiale <strong>isotropo</strong> — nessun calcestruzzo armato (aste d'armatura non modellate)</li>
+      <li>Piastra <strong>singola</strong> — nessun sistema di piastre interconnesse</li>
+      <li>Vincoli rigidi — modellazione semplificata dell'interazione suolo-struttura</li>
+      <li>Carichi <strong>statici</strong> — nessuna analisi dinamica o sismica</li>
+    </ul>
+  </div>
+  
+  <div class="info-card warning">
+    <h4>⚠️ Errori comuni</h4>
+    <ul>
+      <li><strong>Modello labile:</strong> senza vincoli sufficienti l'analisi FEM fallisce. Inserire almeno un vincolo.</li>
+      <li><strong>Carico concentrato lontano:</strong> se il centro del carico è fuori dalla piastra, il carico si distribuisce al nodo più vicino.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer" id="footer">
+  <p><strong>🏗️ FEM Soletta</strong> — Documentazione Tecnica</p>
+  <p>Versione 1.0 &middot; Ultimo aggiornamento: Aprile 2026</p>
+  <p>Sviluppato da <strong>Ing. Domenico Gaudioso</strong> &middot; <a href="https://github.com/DomenicoGaudioso/Piastra" style="color:#E87D3E">GitHub</a></p>
+  <div class="disclaimer">
+    <strong>DISCLAIMER TECNICO:</strong> I risultati prodotti dall'applicazione devono essere verificati da un ingegnere abilitato prima di qualsiasi impiego professionale. 
+    Il modello FEM è elastico lineare e non tiene conto di fessurazione, ritiro o viscosità del calcestruzzo. L'applicazione fornisce risultati indicativi per analisi preliminari.
+  </div>
+</footer>
+
+<script>
+// Smooth scroll for navigation
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function (e) {
+    e.preventDefault();
+    document.querySelector(this.getAttribute('href')).scrollIntoView({
+      behavior: 'smooth'
+    });
+  });
+});
+</script>
+
+</body>
+</html>
